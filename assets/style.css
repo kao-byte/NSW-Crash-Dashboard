@@ -1,0 +1,132 @@
+/* Responsive layout for the filters row
+   - On large screens the filters are laid out horizontally (default)
+   - On small screens (<= 800px) they stack vertically and expand to full width
+*/
+
+.filters-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.filters-row .filter-control {
+  width: 320px;
+  margin-left: 15px;
+}
+
+.filters-row .filter-control.range {
+  margin-left: 0;
+  flex: 1 1 0;
+  min-width: 200px; /* ensure it can shrink appropriately after mid-width */
+}
+
+@media (max-width: 600px) {
+  /* On narrower viewports keep the explicit column behavior for full-width controls */
+  .filters-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .filters-row .filter-control {
+    width: 100% !important;
+    margin-left: 0 !important;
+  }
+
+  /* Ensure Dash dropdowns and sliders stretch to container width */
+  .filters-row .filter-control .Select,
+  .filters-row .filter-control .rc-slider,
+  .filters-row .filter-control .dash-core-components-range-slider {
+    width: 100% !important;
+  }
+
+  /* small tweak for very narrow screens */
+  .filters-row .filter-control { gap: 6px; }
+}
+
+/* Indicators row - key metrics display */
+.indicators-row {
+  display: flex;
+  gap: 15px;
+  margin: 0 15px;
+  flex-wrap: wrap;
+}
+
+.indicator-card {
+  flex: 1 1 0;
+  min-width: 160px;
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.308);
+  padding: 20px;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.indicator-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.473);
+  transform: translateY(-2px);
+}
+
+@media (max-width: 800px) {
+  .indicator-card {
+    flex: 1 1 calc(50% - 15px);
+    min-width: unset;
+  }
+}
+
+@media (max-width: 400px) {
+  .indicators-row {
+    flex-direction: column;
+  }
+  
+  .indicator-card {
+    width: 93%;
+  }
+}
+
+/* Graphs row - responsive layout for chart cards */
+.graphs-row {
+  display: flex;
+  gap: 20px;
+  margin: 0 15px;
+  flex-wrap: wrap;
+}
+
+/* Chart card styling with border and shadow */
+.chart-card {
+  flex: 1 1 0;
+  min-width: 10px;
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.272);
+  padding: 16px;
+}
+
+.chart-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.492);
+}
+
+/* Ensure charts fill their container */
+.degree-pie-chart,
+.map-chart {
+  height: auto;
+  width: auto;
+}
+
+@media (max-width: 700px) {
+  /* Stack charts vertically on smaller screens */
+  .graphs-row {
+    flex-direction: column;
+  }
+  
+  .chart-card {
+    width: 93%;
+    height: auto;
+    min-width: unset;
+  }
+}
