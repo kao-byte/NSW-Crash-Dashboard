@@ -14,6 +14,7 @@ transport_nsw_df['no_total_injured'] = transport_nsw_df['no_seriously_injured'] 
 transport_nsw_df = transport_nsw_df.dropna(subset=['latitude', 'longitude'])
 
 app = Dash(__name__, title='NSW Road Crash Dashboard')
+app._favicon = 'favicon.ico'
 
 # Build selector options
 weather_values = sorted([str(w) for w in transport_nsw_df['weather'].dropna().unique()])
@@ -168,7 +169,27 @@ app.layout = html.Div([
         html.Div([
             dcc.Graph(id='map-chart', className='map-chart', style={'height': '350px'}),
         ], className='chart-card'),
-    ], className='graphs-row', style={'fontFamily': 'Trebuchet MS, sans-serif'})
+    ], className='graphs-row', style={'fontFamily': 'Trebuchet MS, sans-serif'}),
+
+    # Data Source and License Card
+    html.Div([
+        html.Div([
+            html.Span('Data Source: ', className='label'),
+            html.A(
+                'TfNSW Open Data Hub',
+                href='https://opendata.transport.nsw.gov.au/data/dataset/nsw-crash-data',
+                target='_blank',
+                className='separator'
+            ),
+            html.Br(),
+            html.Span('License: ', className='label'),
+            html.A(
+                'Creative Commons Attribution',
+                href='https://opendefinition.org/licenses/cc-by/',
+                target='_blank'
+            ),
+        ], className='data-source-card', style={'marginTop': '15px'})
+    ], className='data-source-container')
 ])
 
 
@@ -334,7 +355,7 @@ def update_figure(selected_range, selected_weather, selected_surface_condition, 
             x=trend_data['Year'],
             y=trend_data['Total Accidents'],
             name='Total Accidents',
-            line=dict(color='#1f77b4', width=3),
+            line=dict(color="#86a8da", width=3),
             mode='lines+markers',
             marker=dict(size=8),
             hovertemplate='<br><b><span style="font-size:16px">%{y:,}</span></b> accidents<extra></extra>'
@@ -406,7 +427,7 @@ def update_figure(selected_range, selected_weather, selected_surface_condition, 
             x=speed_limit_data['Speed Limit'],
             y=speed_limit_data['Total Accidents'],
             name='Total Accidents',
-            marker_color='#1f77b4',
+            marker_color='#86a8da',
             hovertemplate='<br>Accidents: <b><span style="font-size:15px">%{y:,}</span></b><extra></extra>'
         ),
         secondary_y=False
