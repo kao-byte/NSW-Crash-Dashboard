@@ -113,7 +113,8 @@
 
 /* Ensure charts fill their container */
 .degree-pie-chart,
-.map-chart {
+.map-chart,
+.speed-limit-chart {
   height: auto;
   width: auto;
 }
