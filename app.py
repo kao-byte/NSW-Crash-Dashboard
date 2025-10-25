@@ -13,7 +13,7 @@ transport_nsw_df['longitude'] = pd.to_numeric(transport_nsw_df['longitude'], err
 transport_nsw_df['no_total_injured'] = transport_nsw_df['no_seriously_injured'] + transport_nsw_df['no_moderately_injured'] + transport_nsw_df['no_minor_other_injured']
 transport_nsw_df = transport_nsw_df.dropna(subset=['latitude', 'longitude'])
 
-app = Dash(__name__)
+app = Dash(__name__, title='NSW Road Crash Dashboard')
 
 # Build selector options
 weather_values = sorted([str(w) for w in transport_nsw_df['weather'].dropna().unique()])
@@ -26,12 +26,17 @@ lga_options = [{'label': 'All', 'value': 'All'}] + [{'label': l, 'value': l} for
 app.layout = html.Div([
     # Top banner: logo on the left, title on the right
     html.Div([
-        html.Img(
-            src='/assets/nsw.svg',
-            style={'height': '70px', 'display': 'block','marginRight': '20px'}
+        html.A(
+            html.Img(
+                src='/assets/nsw.svg',
+                style={'height': '70px', 'display': 'block','marginRight': '20px'}
+            ),
+            href='https://opendata.transport.nsw.gov.au/data/dataset/nsw-crash-data',
+            target='_blank',
+            style={'textDecoration': 'none'}
         ),
         html.H1(
-            'New South Wales Crash Statistics',
+            'Road Crash Statistics',
             style={'margin': '0', 'fontSize': '28px', 'fontWeight': '600', 'fontFamily': 'Trebuchet MS, sans-serif', 'textAlign': 'left'}
         ),
     ],
