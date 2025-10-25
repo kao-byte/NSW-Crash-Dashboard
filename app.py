@@ -144,14 +144,14 @@ app.layout = html.Div([
         ], className='chart-card'),
     ], className='graphs-row', style={'fontFamily': 'Trebuchet MS, sans-serif', 'marginBottom': '20px'}),
 
-    # Third row: Weather Distribution, Region Distribution, and Map
+    # Third row: Speed Limit vs Accidents, Region Distribution, and Map
     html.Div([
         html.Div([
             html.H1(
-                'Weather Conditions Distribution',
+                'Speed Limit vs Accidents',
                 style={'margin': '0', 'fontSize': '18px', 'fontWeight': '300', 'fontFamily': 'Trebuchet MS, sans-serif', 'textAlign': 'left'}
             ),
-            dcc.Graph(id='weather-donut-chart', className='weather-donut-chart', style={'height': '350px'}),
+            dcc.Graph(id='speed-limit-chart', className='speed-limit-chart', style={'height': '350px'}),
         ], className='chart-card'),
         html.Div([
             html.H1(
@@ -171,7 +171,7 @@ app.layout = html.Div([
     Output('map-chart', 'figure'),
     Output('degree-pie-chart', 'figure'),
     Output('trend-chart', 'figure'),
-    Output('weather-donut-chart', 'figure'),
+    Output('speed-limit-chart', 'figure'),
     Output('location-bar-chart', 'figure'),
     Output('conurbation-donut-chart', 'figure'),
     Output('total-accidents', 'children'),
@@ -202,7 +202,7 @@ def update_figure(selected_range, selected_weather, selected_surface_condition, 
         filtered_df = filtered_df[filtered_df['lga'].astype(str).isin(selected_lga)]
 
     # Color mapping used for charts below.
-    pie_color_map = {
+    injury_donut_color_map = {
         'Non-casualty (towaway)': "#15a539",
         'Minor/Other Injury':     "#dcac2a",
         'Moderate Injury':        "#5BB3BC",
@@ -272,7 +272,7 @@ def update_figure(selected_range, selected_weather, selected_surface_condition, 
     # Map to concise labels
     crash_distribution['label'] = crash_distribution['degree_of_crash_detailed'].map(label_mapping)
 
-    pie_fig = px.pie(
+    injury_donut_fig = px.pie(
         crash_distribution,
         names='label',
         values='count',
@@ -280,7 +280,7 @@ def update_figure(selected_range, selected_weather, selected_surface_condition, 
         labels={"label": "Crash Degree", "count": "Count of Incidents"},
         category_orders={'label': ['Non-casualty', 'Minor', 'Moderate', 'Serious', 'Fatal']},
         color='degree_of_crash_detailed',
-        color_discrete_map=pie_color_map
+        color_discrete_map=injury_donut_color_map
     )
 
     # Custom hover template for pie chart
@@ -292,13 +292,13 @@ def update_figure(selected_range, selected_weather, selected_surface_condition, 
     )
 
     # Slightly pull all slices to match prior behaviour
-    pie_fig.update_traces(
+    injury_donut_fig.update_traces(
         textinfo='percent+label', 
         pull=[0.05] * len(pie_desired_order),
         hovertemplate=pie_hover_template
     )
     # Disable legend and keep existing donut hole/margins
-    pie_fig.update_layout(
+    injury_donut_fig.update_layout(
         showlegend=False, 
         margin={'r':0,'t':40,'l':0,'b':0},
         height=350,
@@ -371,44 +371,74 @@ def update_figure(selected_range, selected_weather, selected_surface_condition, 
         plot_bgcolor='white'
     )
 
-    # Create weather horizontal bar chart
-    weather_counts = filtered_df['weather'].value_counts().reset_index()
-    weather_counts.columns = ['Weather', 'Count']
-    weather_counts = weather_counts.sort_values('Count', ascending=True)  # Sort for better visualization
+    # Create speed limit vs accidents chart (dual axis)
+    # Filter data to exclude Unknown and only include 40-110 km/h
+    speed_limits_to_include = ['40 km/h', '50 km/h', '60 km/h', '70 km/h', '80 km/h', '90 km/h', '100 km/h', '110 km/h']
+    speed_filtered_df = filtered_df[filtered_df['speed_limit'].isin(speed_limits_to_include)].copy()
+    
+    # Group by speed limit and calculate total accidents and death rate
+    speed_limit_data = speed_filtered_df.groupby('speed_limit').agg({
+        'crash_id': 'count',
+        'no_killed': 'sum',
+        'no_of_traffic_units_involved': 'sum'
+    }).reset_index()
+    speed_limit_data.columns = ['Speed Limit', 'Total Accidents', 'Killed', 'Passengers Involved']
+    
+    # Calculate death rate (killed per passengers involved, as percentage)
+    speed_limit_data['Death Rate'] = (speed_limit_data['Killed'] / speed_limit_data['Passengers Involved'] * 100).fillna(0)
+    
+    # Sort by speed limit value for proper ordering
+    speed_order = ['40 km/h', '50 km/h', '60 km/h', '70 km/h', '80 km/h', '90 km/h', '100 km/h', '110 km/h']
+    speed_limit_data['Speed Limit'] = pd.Categorical(speed_limit_data['Speed Limit'], categories=speed_order, ordered=True)
+    speed_limit_data = speed_limit_data.sort_values('Speed Limit')
 
-    # Calculate percentages
-    total_weather = weather_counts['Count'].sum()
-    weather_counts['Percentage'] = (weather_counts['Count'] / total_weather * 100).round(1)
+    # Create figure with secondary y-axis
+    speed_limit_fig = make_subplots(specs=[[{"secondary_y": True}]])
 
-    weather_bar_fig = px.bar(
-        weather_counts,
-        y='Weather',
-        x='Count',
-        orientation='h',
-        labels={"Weather": "Weather Condition", "Count": "Count of Incidents"},
-        text='Count'
+    # Add bar chart for Total Accidents
+    speed_limit_fig.add_trace(
+        go.Bar(
+            x=speed_limit_data['Speed Limit'],
+            y=speed_limit_data['Total Accidents'],
+            name='Total Accidents',
+            marker_color='#1f77b4',
+            hovertemplate='<br>Accidents: <b><span style="font-size:15px">%{y:,}</span></b><extra></extra>'
+        ),
+        secondary_y=False
     )
 
-    weather_hover_template = (
-        "<b>%{y}</b><br><br>"
-        "Count: <b><span style='font-size:16px'>%{x:,}</span></b><br>"
-        "Percentage: <b><span style='font-size:16px'>%{customdata[0]}%</span></b><br>"
-        "<extra></extra>"
+    # Add line chart for Death Rate
+    speed_limit_fig.add_trace(
+        go.Scatter(
+            x=speed_limit_data['Speed Limit'],
+            y=speed_limit_data['Death Rate'],
+            name='Death Rate (%)',
+            line=dict(color='#ce0e25', width=3),
+            mode='lines+markers',
+            marker=dict(size=8),
+            hovertemplate='<br>Death Rate: <b><span style="font-size:15px">%{y:.2f}%</span></b><extra></extra>'
+        ),
+        secondary_y=True
     )
 
-    weather_bar_fig.update_traces(
-        hovertemplate=weather_hover_template,
-        customdata=weather_counts[['Percentage']].values
-    )
+    # Update axes
+    speed_limit_fig.update_xaxes(title_text="Speed Limit", gridcolor='#e0e0e0')
+    speed_limit_fig.update_yaxes(title_text="Total Accidents", secondary_y=False, gridcolor='#e0e0e0')
+    speed_limit_fig.update_yaxes(title_text="Death Rate (%)", secondary_y=True, gridcolor='#e0e0e0')
 
-    weather_bar_fig.update_layout(
-        showlegend=False,
-        margin={'r': 0, 't': 40, 'l': 0, 'b': 0},
+    speed_limit_fig.update_layout(
         height=350,
         autosize=True,
-        plot_bgcolor='white',
-        xaxis=dict(gridcolor='#e0e0e0', title='Number of Incidents'),
-        yaxis=dict(title='')
+        margin={'r': 0, 't': 40, 'l': 0, 'b': 0},
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1
+        ),
+        hovermode='x unified',
+        plot_bgcolor='white'
     )
 
     # Create location type bar chart (Top 5)
@@ -486,6 +516,7 @@ def update_figure(selected_range, selected_weather, selected_surface_condition, 
 
     conurbation_donut_fig.update_traces(
         textinfo='percent+label',
+        pull=[0.05] * len(conurbation_counts),
         hovertemplate=conurbation_hover_template
     )
 
@@ -496,7 +527,7 @@ def update_figure(selected_range, selected_weather, selected_surface_condition, 
         autosize=True
     )
 
-    return map_fig, pie_fig, trend_fig, weather_bar_fig, location_bar_fig, conurbation_donut_fig, f"{total_accidents:,}", f"{passengers_involved:,}", f"{moderately_injured:,}", f"{seriously_injured:,}", f"{killed:,}"
+    return map_fig, injury_donut_fig, trend_fig, speed_limit_fig, location_bar_fig, conurbation_donut_fig, f"{total_accidents:,}", f"{passengers_involved:,}", f"{moderately_injured:,}", f"{seriously_injured:,}", f"{killed:,}"
 
 @app.server.route('/assets/nsw.svg')
 def serve_nsw():
