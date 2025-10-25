@@ -131,3 +131,42 @@
     min-width: unset;
   }
 }
+
+/* Data Source and License Card */
+.data-source-container {
+  margin: 0 15px 20px 15px;
+}
+
+.data-source-card {
+  padding: 16px;
+  background-color: white;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.272);
+  font-family: Trebuchet MS, sans-serif;
+  font-size: 14px;
+  text-align: left;
+  transition: all 0.3s ease;
+}
+
+.data-source-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.492);
+}
+
+.data-source-card .label {
+  font-weight: bold;
+  margin-right: 5px;
+}
+
+.data-source-card a {
+  color: #0066cc;
+  text-decoration: none;
+}
+
+.data-source-card a:hover {
+  text-decoration: underline;
+}
+
+.data-source-card .separator {
+  margin-right: 20px;
+}
